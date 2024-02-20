@@ -1,0 +1,11 @@
+apiVersion: imagebuilder.ai.qingcloud.com/v1
+kind: ImageBuilder
+metadata:
+  name: example
+spec:
+  podName: "nginx"
+  namespace: "default"
+  containerName: "nginx"
+  to: "zichenkkkk/nginx:2.9"
+  username: fake
+  password: "fake"

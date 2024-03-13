@@ -55,7 +55,7 @@ func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, nil
 	}
 	pod := corev1.Pod{}
-	key := client.ObjectKey{Name: imageBuilder.Spec.ContainerName, Namespace: imageBuilder.Spec.Namespace}
+	key := client.ObjectKey{Name: imageBuilder.Spec.PodName, Namespace: imageBuilder.Spec.Namespace}
 	klog.Infof("get pod %s/%s", imageBuilder.Spec.Namespace, imageBuilder.Spec.PodName)
 	err = r.Client.Get(ctx, key, &pod)
 	if err != nil {

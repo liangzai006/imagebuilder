@@ -4,8 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/containerd/containerd/images"
-	"github.com/containerd/containerd/images/converter"
 	"github.com/containerd/containerd/reference"
 	refdocker "github.com/containerd/containerd/reference/docker"
 	"github.com/containerd/containerd/remotes"
@@ -50,26 +48,7 @@ func (r *ImageBuilderReconciler) containerdPush(rawRef, Username, Password strin
 		return err
 	}
 	pushRef := ref
-	if !options.AllPlatforms {
-		pushRef = ref + "-tmp-reduced-platform"
-		// Push fails with "400 Bad Request" when the manifest is multi-platform but we do not locally have multi-platform blobs.
-		// So we create a tmp reduced-platform image to avoid the error.
-		platImg, err := converter.Convert(ctx, r.ContainerdClient, pushRef, ref, converter.WithPlatform(platMC))
-		if err != nil {
-			if len(options.Platforms) == 0 {
-				return fmt.Errorf("failed to create a tmp single-platform image %q: %w", pushRef, err)
-			}
-			return fmt.Errorf("failed to create a tmp reduced-platform image %q (platform=%v): %w", pushRef, options.Platforms, err)
-		}
-		defer r.ContainerdClient.ImageService().Delete(ctx, platImg.Name, images.SynchronousDelete())
-		klog.Infof("pushing as a reduced-platform image (%s, %s)", platImg.Target.MediaType, platImg.Target.Digest)
-	}
 
-	// In order to push images where most layers are the same but the
-	// repository name is different, it is necessary to refresh the
-	// PushTracker. Otherwise, the MANIFEST_BLOB_UNKNOWN error will occur due
-	// to the registry not creating the corresponding layer link file,
-	// resulting in the failure of the entire image push.
 	pushTracker := docker.NewInMemoryTracker()
 
 	pushFunc := func(remote remotes.Resolver) error {
@@ -121,6 +100,6 @@ func NewHostOptions(Username, Password string) (*dockerconfig.HostOptions, error
 		InsecureSkipVerify: true,
 	}
 	ho.DefaultScheme = "http"
-	ho.DefaultTLS = nil
+	//ho.DefaultTLS = nil
 	return &ho, nil
 }

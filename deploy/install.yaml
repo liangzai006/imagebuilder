@@ -20,12 +20,13 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
-          image: zichenkkkk/imagebuilder:1.9.3
+          image: zichenkkkk/imagebuilder:1.2.1
           volumeMounts:
             - name: docker-socket
               mountPath: /var/run/docker.sock
             - name: containerd-socket
               mountPath: /run/containerd/containerd.sock
+          imagePullPolicy: Always
           securityContext:
             privileged: true
       volumes:

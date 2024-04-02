@@ -23,7 +23,6 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// ImageBuilderSpec defines the desired state of ImageBuilder
 type ImageBuilderSpec struct {
 	PodName       string `json:"podName,omitempty"`
 	Namespace     string `json:"namespace,omitempty"`
@@ -36,12 +35,18 @@ type ImageBuilderSpec struct {
 type ImageBuilderStatus struct {
 	State  string `json:"state,omitempty"`
 	Reason string `json:"reason,omitempty"`
+	Node   string `json:"node,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// ImageBuilder is the Schema for the imagebuilders API
+// +kubebuilder:printcolumn:name="PodName",type=string,JSONPath=`.spec.podName`
+// +kubebuilder:printcolumn:name="PodNamespace",type=string,JSONPath=`.spec.namespace`
+// +kubebuilder:printcolumn:name="ContainerName",type=string,JSONPath=`.spec.containerName`
+// +kubebuilder:printcolumn:name="To",type=string,JSONPath=`.spec.to`
+// +kubebuilder:printcolumn:name="State",type=string,JSONPath=`.status.state`
+// +kubebuilder:printcolumn:name="Node",type=string,JSONPath=`.status.node`
 type ImageBuilder struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

@@ -75,6 +75,7 @@ func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	if imageBuilder.Status.State == "" {
 		imageBuilder.Status.State = "Running"
+		imageBuilder.Status.Node = r.NodeName
 		patch, _ := json.Marshal(imageBuilder)
 		err = r.Status().Patch(ctx, imageBuilder, client.RawPatch(client.Merge.Type(), patch))
 		if err != nil {

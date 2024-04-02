@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: imagebuilders.imagebuilder.ai.qingcloud.com
 spec:
   group: imagebuilder.ai.qingcloud.com
@@ -14,25 +14,47 @@ spec:
     singular: imagebuilder
   scope: Namespaced
   versions:
-  - name: v1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.podName
+      name: PodName
+      type: string
+    - jsonPath: .spec.namespace
+      name: PodNamespace
+      type: string
+    - jsonPath: .spec.containerName
+      name: ContainerName
+      type: string
+    - jsonPath: .spec.to
+      name: To
+      type: string
+    - jsonPath: .status.state
+      name: State
+      type: string
+    - jsonPath: .status.node
+      name: Node
+      type: string
+    name: v1
     schema:
       openAPIV3Schema:
-        description: ImageBuilder is the Schema for the imagebuilders API
         properties:
           apiVersion:
-            description: 'APIVersion defines the versioned schema of this representation
-              of an object. Servers should convert recognized schemas to the latest
-              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
             type: string
           kind:
-            description: 'Kind is a string value representing the REST resource this
-              object represents. Servers may infer this from the endpoint the client
-              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
             type: string
           metadata:
             type: object
           spec:
-            description: ImageBuilderSpec defines the desired state of ImageBuilder
             properties:
               containerName:
                 type: string
@@ -49,6 +71,8 @@ spec:
             type: object
           status:
             properties:
+              node:
+                type: string
               reason:
                 type: string
               state:

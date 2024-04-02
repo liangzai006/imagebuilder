@@ -6,6 +6,6 @@ spec:
   podName: "nginx"
   namespace: "default"
   containerName: "nginx"
-  to: "zichenkkkk/nginx:2.9.1"
-  username: fake
-  password: 'fake'
+  to: "zichenkkkk/nginx:4.1"
+  username: zichenkkkk
+  password: '0.6180339'

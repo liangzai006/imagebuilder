@@ -20,7 +20,7 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
-          image: zichenkkkk/imagebuilder:1.2.1
+          image: zichenkkkk/imagebuilder:1.2.2
           volumeMounts:
             - name: docker-socket
               mountPath: /var/run/docker.sock

@@ -17,39 +17,16 @@ limitations under the License.
 package main
 
 import (
-	imagebuilderv1 "imagebuilder/api/v1"
-	"imagebuilder/internal/controller"
-	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"imagebuilder/cmd/core"
 	"k8s.io/klog/v2"
-	ctrl "sigs.k8s.io/controller-runtime"
-	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"os"
 )
-
-var (
-	scheme = runtime.NewScheme()
-)
-
-func init() {
-	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
-	utilruntime.Must(imagebuilderv1.AddToScheme(scheme))
-}
 
 func main() {
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:  scheme,
-		Metrics: metricsserver.Options{BindAddress: "0"},
-	})
-	if err != nil {
-		klog.Fatalf("unable to create manager: %v", err)
-	}
-	if err = controller.NewImageBuilderReconciler(mgr).
-		SetupWithManager(mgr); err != nil {
-		klog.Fatalf("unable to create manager: %v", err)
-	}
-	klog.Info("starting manager")
-	if err = mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		klog.Fatalf("problem running manager: %v", err)
+	cmd := core.NewImageBuilderCommand()
+
+	if err := cmd.Execute(); err != nil {
+		klog.Error(err)
+		os.Exit(1)
 	}
 }

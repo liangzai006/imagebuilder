@@ -1,9 +1,10 @@
-package controller
+package core
 
 import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/reference"
 	refdocker "github.com/containerd/containerd/reference/docker"
 	"github.com/containerd/containerd/remotes"
@@ -18,11 +19,16 @@ import (
 	"os"
 )
 
-func (r *ImageBuilderReconciler) containerdCommit(containerID, to string) error {
+type Containerd struct {
+	ContainerdClient *containerd.Client
+}
+
+func (r *Containerd) Commit(ctx context.Context, containerID, to string) error {
 	options := types.ContainerCommitOptions{
 		Stdout: os.Stdout,
+		Pause:  true,
 	}
-	err := container.Commit(context.TODO(), r.ContainerdClient, to, containerID, options)
+	err := container.Commit(ctx, r.ContainerdClient, to, containerID, options)
 	if err != nil {
 		klog.Errorf("containerdCommit error: %v", err)
 		return err
@@ -31,8 +37,7 @@ func (r *ImageBuilderReconciler) containerdCommit(containerID, to string) error 
 	return err
 }
 
-func (r *ImageBuilderReconciler) containerdPush(rawRef, Username, Password string) error {
-	ctx := context.TODO()
+func (r *Containerd) Push(ctx context.Context, rawRef, Username, Password string) error {
 	options := types.ImagePushOptions{
 		Stdout: os.Stdout,
 	}

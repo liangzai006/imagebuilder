@@ -1,20 +1,26 @@
-package controller
+package core
 
 import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"github.com/docker/docker/api/types"
+	dockerclient "github.com/docker/docker/client"
 	"io"
 	"os"
 )
 
-func (r *ImageBuilderReconciler) dockerCommit(containerID, to string) error {
+type Docker struct {
+	DockerClient *dockerclient.Client
+}
+
+func (r *Docker) Commit(ctx context.Context, containerID, to string) error {
 
 	opts := types.ContainerCommitOptions{
 		Reference: to,
+		Pause:     true,
 	}
-	_, err := r.DockerClient.ContainerCommit(context.Background(), containerID, opts)
+	_, err := r.DockerClient.ContainerCommit(ctx, containerID, opts)
 
 	return err
 }
@@ -24,7 +30,7 @@ type AuthConfig struct {
 	Password string
 }
 
-func (r *ImageBuilderReconciler) dockerPush(imageName, Username, Password string) error {
+func (r *Docker) Push(ctx context.Context, imageName, Username, Password string) error {
 
 	authConfig := AuthConfig{Username: Username, Password: Password}
 	authBytes, _ := json.Marshal(authConfig)
@@ -35,7 +41,7 @@ func (r *ImageBuilderReconciler) dockerPush(imageName, Username, Password string
 		opts.RegistryAuth = encodedAuth
 	}
 
-	out, err := r.DockerClient.ImagePush(context.Background(), imageName, opts)
+	out, err := r.DockerClient.ImagePush(ctx, imageName, opts)
 	if err != nil {
 		return err
 	}

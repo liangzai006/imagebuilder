@@ -12,6 +12,9 @@ spec:
     listKind: ImageBuilderList
     plural: imagebuilders
     singular: imagebuilder
+    shortNames:
+      - ib
+      - imgb
   scope: Namespaced
   versions:
   - additionalPrinterColumns:

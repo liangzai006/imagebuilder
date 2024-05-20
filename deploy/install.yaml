@@ -1,7 +1,9 @@
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
-  name: imagebuilder-daemonset
+  labels:
+    imagebuilder.ai.qingcloud.com: "imagebuilder-deployment"
+  name: imagebuilder
 spec:
   selector:
     matchLabels:
@@ -14,28 +16,19 @@ spec:
       serviceAccountName: imagebuilder-service-account
       containers:
         - name: imagebuilder-container
+          image: jw008/imagebuild:v1.2.4
           env:
-            - name: NODE_NAME
+            - name: imagebuild_name
               valueFrom:
                 fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
-          image: zichenkkkk/imagebuilder:1.2.2
-          volumeMounts:
-            - name: docker-socket
-              mountPath: /var/run/docker.sock
-            - name: containerd-socket
-              mountPath: /run/containerd/containerd.sock
+                  fieldPath: metadata.name
+            - name: imagebuild_namespace
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          args:
+            - "controller"
           imagePullPolicy: Always
-          securityContext:
-            privileged: true
-      volumes:
-        - name: docker-socket
-          hostPath:
-            path: /var/run/docker.sock
-        - name: containerd-socket
-          hostPath:
-            path: /run/containerd/containerd.sock
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -51,6 +44,16 @@ rules:
   - apiGroups: [ "" ]
     resources: [ "pods", "nodes" ]
     verbs: [ "get", "list", "watch" ]
+  - apiGroups:
+    - "batch"
+    resources:
+      - "jobs"
+    verbs:
+      - create
+      - get
+      - list
+      - watch
+      - delete
   - apiGroups: [ "imagebuilder.ai.qingcloud.com" ]
     resources:
       - '*'

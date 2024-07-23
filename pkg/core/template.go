@@ -27,6 +27,9 @@ func JobTemplate(o JobOptions) *v1.Job {
 		},
 		Spec: v1.JobSpec{
 			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{"sidecar.istio.io/inject": "false"},
+				},
 				Spec: corev1.PodSpec{
 					RestartPolicy:      corev1.RestartPolicyNever,
 					ServiceAccountName: "imagebuilder-service-account",

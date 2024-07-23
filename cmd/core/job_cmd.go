@@ -7,7 +7,6 @@ import (
 	dockerclient "github.com/docker/docker/client"
 	"github.com/spf13/cobra"
 	imagebuilderv1 "imagebuilder/api/v1"
-	"imagebuilder/pkg/constant"
 	"imagebuilder/pkg/core"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/rest"
@@ -62,27 +61,27 @@ func NewJobCommand() *cobra.Command {
 			builderAction, err := options.initMontSock(cmd.Context(), imageBuilder.Status.Node)
 			if err != nil {
 				klog.Errorf("init mount sock error:%s", err)
-				return options.updateStatusFailed(cmd.Context(), imageBuilder, "failed to init mount sock ")
+				return err
 			}
 
 			if options.ContainerId == "" {
 				klog.Errorf("containerID is empty")
-				return options.updateStatusFailed(cmd.Context(), imageBuilder, "containerID is empty")
+				return err
 			}
 
 			to := imageBuilder.Spec.To
 			err = builderAction.Commit(cmd.Context(), options.ContainerId, to)
 			if err != nil {
 				klog.Errorf("containerd commit error: %v", err)
-				return options.updateStatusFailed(cmd.Context(), imageBuilder, err.Error())
+				return err
 			}
 			klog.Infof("containerd commit success: %s", to)
 			err = builderAction.Push(cmd.Context(), to, imageBuilder.Spec.Username, imageBuilder.Spec.Password)
 			if err != nil {
 				klog.Errorf("containerd push error: %v", err)
-				return options.updateStatusFailed(cmd.Context(), imageBuilder, err.Error())
+				return err
 			}
-			return options.updateStatusSuccess(cmd.Context(), imageBuilder)
+			return nil
 
 		},
 	}
@@ -133,18 +132,4 @@ func (j *JobOptions) initMontSock(ctx context.Context, nodeName string) (core.Im
 		return nil, fmt.Errorf("unknown containerd runtime %s", containerRuntime)
 	}
 
-}
-func (j *JobOptions) updateStatusSuccess(ctx context.Context, imageBuilder *imagebuilderv1.ImageBuilder) error {
-	imageBuilder.Status.State = constant.Succeeded
-	imageBuilder.Status.Reason = ""
-	err := j.Status().Update(ctx, imageBuilder)
-	return err
-}
-
-func (j *JobOptions) updateStatusFailed(ctx context.Context, imageBuilder *imagebuilderv1.ImageBuilder, reason string) error {
-
-	imageBuilder.Status.State = constant.Failed
-	imageBuilder.Status.Reason = reason
-	err := j.Status().Update(ctx, imageBuilder)
-	return err
 }

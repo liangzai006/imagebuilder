@@ -82,7 +82,15 @@ func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	pod, err := r.ClientSet.CoreV1().Pods(builder.Spec.Namespace).Get(ctx, builder.Spec.PodName, metav1.GetOptions{})
 	if err != nil {
 		klog.Errorf("get pod: %s/%s error: %v", builder.Spec.Namespace, builder.Spec.PodName, err)
+		builder.Status.State = constant.Failed
+		builder.Status.Node = pod.Spec.NodeName
+		err = r.Status().Update(ctx, builder)
+		if err != nil {
+			klog.Errorf("update status error: %v", err)
+			return ctrl.Result{}, err
+		}
 		return ctrl.Result{}, nil
+
 	}
 
 	if builder.Status.State == "" {
@@ -123,18 +131,15 @@ func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 				for {
 					j, err := r.ClientSet.BatchV1().Jobs(o.JobNamespace).Get(ctx, o.Name, metav1.GetOptions{})
-					if errors.IsNotFound(err) {
-						break
-					}
+
 					klog.Infof("get job status for '%s/%s'. createtime:%s", o.Name, o.JobNamespace, j.CreationTimestamp.String())
 					if (len(j.Status.Conditions) > 0 && j.Status.Conditions[0].Type == batchv1.JobFailed) || err != nil {
 						builder.Status.State = constant.Failed
 						if err != nil {
-							builder.Status.Reason = err.Error()
+							err = r.updateStatusFailed(ctx, builder, err.Error())
 						} else if j.Status.Conditions[0].Type == batchv1.JobFailed {
-							builder.Status.Reason = j.Status.Conditions[0].Message
+							err = r.updateStatusFailed(ctx, builder, j.Status.Conditions[0].Message)
 						}
-						err = r.Status().Update(ctx, builder)
 						if err != nil {
 							klog.Errorf("update status error: %v", err)
 						}
@@ -153,4 +158,18 @@ func (r *ImageBuilderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&imagebuilderv1.ImageBuilder{}).
 		Complete(r)
+}
+
+func (r *ImageBuilderReconciler) updateStatusSuccess(ctx context.Context, imageBuilder *imagebuilderv1.ImageBuilder) error {
+	imageBuilder.Status.State = constant.Succeeded
+	err := r.Status().Update(ctx, imageBuilder)
+	return err
+}
+
+func (r *ImageBuilderReconciler) updateStatusFailed(ctx context.Context, imageBuilder *imagebuilderv1.ImageBuilder, reason string) error {
+
+	imageBuilder.Status.State = constant.Failed
+	imageBuilder.Status.Reason = reason
+	err := r.Status().Update(ctx, imageBuilder)
+	return err
 }

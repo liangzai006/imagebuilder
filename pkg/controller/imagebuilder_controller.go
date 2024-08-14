@@ -118,37 +118,39 @@ func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		}
 	}
 
-	klog.Infof("check for failed tasks.  %s/%s", m.Name, m.JobNamespace)
+	klog.Infof("check for running tasks.  %s/%s", m.Name, m.JobNamespace)
 	_, err = r.ClientSet.BatchV1().Jobs(m.JobNamespace).Get(ctx, m.Name, metav1.GetOptions{})
 	if err != nil {
-		if errors.IsNotFound(err) {
-			err = r.Create(ctx, core.JobTemplate(m))
-			if err != nil {
-				klog.Errorf("failed to create builder job. err:%s", err)
-				return ctrl.Result{}, err
-			}
-			go func(o core.JobOptions) {
-
-				for {
-					j, err := r.ClientSet.BatchV1().Jobs(o.JobNamespace).Get(ctx, o.Name, metav1.GetOptions{})
-
-					klog.Infof("get job status for '%s/%s'. createtime:%s", o.Name, o.JobNamespace, j.CreationTimestamp.String())
-					if (len(j.Status.Conditions) > 0 && j.Status.Conditions[0].Type == batchv1.JobFailed) || err != nil {
-						builder.Status.State = constant.Failed
-						if err != nil {
-							err = r.updateStatusFailed(ctx, builder, err.Error())
-						} else if j.Status.Conditions[0].Type == batchv1.JobFailed {
-							err = r.updateStatusFailed(ctx, builder, j.Status.Conditions[0].Message)
-						}
-						if err != nil {
-							klog.Errorf("update status error: %v", err)
-						}
-						break
-					}
-					time.Sleep(10 * time.Second)
-				}
-			}(m)
+		if !errors.IsNotFound(err) {
+			return ctrl.Result{}, err
 		}
+		err = r.Create(ctx, core.JobTemplate(m))
+		if err != nil {
+			klog.Errorf("failed to create builder job. err:%s", err)
+			return ctrl.Result{}, err
+		}
+	}
+
+	for {
+		j, err := r.ClientSet.BatchV1().Jobs(m.JobNamespace).Get(ctx, m.Name, metav1.GetOptions{})
+
+		if len(j.Status.Conditions) > 0 && j.Status.Conditions[0].Type == batchv1.JobComplete && err == nil {
+			err = r.updateStatusSuccess(ctx, builder)
+			break
+		}
+
+		if len(j.Status.Conditions) > 0 && j.Status.Conditions[0].Type == batchv1.JobFailed && err != nil {
+			err = r.updateStatusFailed(ctx, builder, j.Status.Conditions[0].Message)
+			break
+		}
+
+		if err != nil {
+			err = r.updateStatusFailed(ctx, builder, err.Error())
+			break
+		}
+
+		klog.Infof("get job status for '%s/%s'. createtime:%s", m.Name, m.JobNamespace, j.CreationTimestamp.String())
+		time.Sleep(10 * time.Second)
 	}
 
 	return ctrl.Result{}, nil

@@ -24,8 +24,9 @@ func NewControllerCommand() *cobra.Command {
 		Use: "controller",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-				Scheme:  scheme,
-				Metrics: metricsserver.Options{BindAddress: "0"},
+				Scheme:         scheme,
+				LeaderElection: false,
+				Metrics:        metricsserver.Options{BindAddress: "0"},
 			})
 			if err != nil {
 				klog.Fatalf("unable to create manager: %v", err)

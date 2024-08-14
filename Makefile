@@ -1,4 +1,4 @@
-IMG ?= zichenkkkk/imagebuilder:1.4
+IMG ?= jw008/imagebuilder:1.2.7
 
 
 # Get the currently used golang install path (in GOPATH/bin, unless GOBIN is set)

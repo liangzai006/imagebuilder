@@ -5,7 +5,7 @@ go 1.22.1
 require (
 	github.com/containerd/containerd v1.7.20
 	github.com/containerd/nerdctl v1.7.6
-	github.com/docker/docker v25.0.6+incompatible
+	github.com/docker/docker v24.0.7+incompatible
 	github.com/spf13/cobra v1.8.0
 	k8s.io/api v0.30.1
 	k8s.io/apimachinery v0.30.1

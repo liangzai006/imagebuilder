@@ -30,6 +30,7 @@ import (
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"strings"
 	"time"
 )
@@ -39,6 +40,7 @@ type ImageBuilderReconciler struct {
 	Scheme     *runtime.Scheme
 	ClientSet  *kubernetes.Clientset
 	ManagerPod *corev1.Pod
+	MaxWorkNum int
 }
 
 func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
@@ -159,6 +161,9 @@ func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request
 func (r *ImageBuilderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&imagebuilderv1.ImageBuilder{}).
+		WithOptions(controller.Options{
+			MaxConcurrentReconciles: r.MaxWorkNum,
+		}).
 		Complete(r)
 }
 

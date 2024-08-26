@@ -12,6 +12,7 @@ import (
 )
 
 type ControllerOptions struct {
+	MaxWorkNumber int
 }
 
 func NewControllerOptions() *ControllerOptions {
@@ -50,6 +51,7 @@ func NewControllerCommand() *cobra.Command {
 				Scheme:     mgr.GetScheme(),
 				ClientSet:  clientSet,
 				ManagerPod: pod,
+				MaxWorkNum: c.MaxWorkNumber,
 			}).SetupWithManager(mgr); err != nil {
 				klog.Fatalf("unable to create manager: %v", err)
 				return err
@@ -67,5 +69,5 @@ func NewControllerCommand() *cobra.Command {
 }
 
 func (c *ControllerOptions) addCommandFlag(cmd *cobra.Command) {
-
+	cmd.Flags().IntVarP(&c.MaxWorkNumber, "queue", "q", 10, "max work number")
 }

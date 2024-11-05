@@ -154,7 +154,7 @@ func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		klog.Infof("get job status for '%s/%s'. createtime:%s", m.Name, m.JobNamespace, j.CreationTimestamp.String())
 		time.Sleep(10 * time.Second)
 	}
-
+	klog.Infof("save images complete for %s/%s", m.Name, m.JobNamespace)
 	return ctrl.Result{}, nil
 }
 

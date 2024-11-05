@@ -1,13 +1,15 @@
 package core
 
 import (
+	"bufio"
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/docker/docker/api/types"
 	dockerclient "github.com/docker/docker/client"
-	"io"
-	"os"
+	"strings"
 )
 
 type Docker struct {
@@ -45,10 +47,30 @@ func (r *Docker) Push(ctx context.Context, imageName, Username, Password string)
 	if err != nil {
 		return err
 	}
-	_, err = io.Copy(os.Stdout, out)
-	if err != nil {
-		return err
+
+	scanner := bufio.NewScanner(out)
+	//{"errorDetail":{"message":"received unexpected HTTP status: 504 Gateway Time-out"},"error":"received unexpected HTTP status: 504 Gateway Time-out"}
+
+	for scanner.Scan() {
+		str := scanner.Text()
+		fmt.Println(str)
+		if strings.Contains(str, "error") {
+			m := map[string]interface{}{}
+			err = json.Unmarshal(scanner.Bytes(), &m)
+			if err == nil {
+				if v, ok := m["error"]; ok {
+					return errors.New(v.(string))
+				}
+
+			}
+		}
+
 	}
+
+	//_, err = io.Copy(os.Stdout, out)
+	//if err != nil {
+	//	return err
+	//}
 	defer out.Close()
 	return err
 }

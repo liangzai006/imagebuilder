@@ -45,6 +45,7 @@ type ImageBuilderReconciler struct {
 
 func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	builder := &imagebuilderv1.ImageBuilder{}
+	r.ManagerPod.Namespace = "aicp-build"
 	err := r.Client.Get(ctx, req.NamespacedName, builder)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
@@ -110,7 +111,7 @@ func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		Namespace:     builder.Namespace,
 		Name:          builder.Name,
 		JobNamespace:  r.ManagerPod.Namespace,
-		ImageRegistry: r.ManagerPod.Spec.Containers[0].Image,
+		ImageRegistry: "dockerhub.aicp.local/aicp-common/jw008/imagebuilder:v1.2.9",
 		NodeName:      builder.Status.Node,
 	}
 
@@ -141,7 +142,7 @@ func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			break
 		}
 
-		if len(j.Status.Conditions) > 0 && j.Status.Conditions[0].Type == batchv1.JobFailed && err != nil {
+		if len(j.Status.Conditions) > 0 && j.Status.Conditions[0].Type == batchv1.JobFailed && err == nil {
 			err = r.updateStatusFailed(ctx, builder, j.Status.Conditions[0].Message)
 			break
 		}
@@ -168,13 +169,14 @@ func (r *ImageBuilderReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func (r *ImageBuilderReconciler) updateStatusSuccess(ctx context.Context, imageBuilder *imagebuilderv1.ImageBuilder) error {
+	klog.Errorf("save image %s/%s succeuss", imageBuilder.Namespace, imageBuilder.Name)
 	imageBuilder.Status.State = constant.Succeeded
 	err := r.Status().Update(ctx, imageBuilder)
 	return err
 }
 
 func (r *ImageBuilderReconciler) updateStatusFailed(ctx context.Context, imageBuilder *imagebuilderv1.ImageBuilder, reason string) error {
-
+	klog.Errorf("save image %s/%s failed", imageBuilder.Namespace, imageBuilder.Name)
 	imageBuilder.Status.State = constant.Failed
 	imageBuilder.Status.Reason = reason
 	err := r.Status().Update(ctx, imageBuilder)

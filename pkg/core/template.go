@@ -6,6 +6,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 )
 
 type JobOptions struct {
@@ -28,6 +29,7 @@ func JobTemplate(o JobOptions) *v1.Job {
 			Namespace: o.JobNamespace,
 		},
 		Spec: v1.JobSpec{
+			BackoffLimit: pointer.Int32(2),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{"sidecar.istio.io/inject": "false"},

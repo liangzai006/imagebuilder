@@ -11,6 +11,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
+	"path"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"strings"
@@ -76,11 +77,26 @@ func NewJobCommand() *cobra.Command {
 				return err
 			}
 			klog.Infof("containerd commit success: %s", to)
-			err = builderAction.Push(cmd.Context(), to, imageBuilder.Spec.Username, imageBuilder.Spec.Password)
-			if err != nil {
-				klog.Errorf("containerd push error: %v", err)
-				return err
+
+			switch imageBuilder.Spec.Operator {
+			case imagebuilderv1.Save:
+				tos := strings.Split(to, "/")
+				image := tos[len(tos)-1] + ".tar"
+				err = builderAction.Save(cmd.Context(), to, path.Join(imageBuilder.Spec.LocalHostPath.DefaultContainerPath(), image))
+				if err != nil {
+					klog.Errorf("containerd save error: %v", err)
+					return err
+				}
+				break
+			default:
+				err = builderAction.Push(cmd.Context(), to, imageBuilder.Spec.Username, imageBuilder.Spec.Password)
+				if err != nil {
+					klog.Errorf("containerd push error: %v", err)
+					return err
+				}
+
 			}
+
 			return nil
 
 		},

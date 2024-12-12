@@ -23,23 +23,34 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
+type OperatorType string
+type LocalHostPath string
+
+const (
+	Save OperatorType = "save"
+	Push OperatorType = "push"
+)
+
 type ImageBuilderSpec struct {
-	PodName       string `json:"podName,omitempty"`
-	Namespace     string `json:"namespace,omitempty"`
-	ContainerName string `json:"containerName,omitempty"`
-	Username      string `json:"username,omitempty"`
-	Password      string `json:"password,omitempty"`
-	To            string `json:"to,omitempty"`
+	PodName       string        `json:"podName,omitempty" yaml:"podName,omitempty"`
+	Namespace     string        `json:"namespace,omitempty" yaml:"namespace,omitempty"`
+	ContainerName string        `json:"containerName,omitempty" yaml:"containerName,omitempty"`
+	Username      string        `json:"username,omitempty" yaml:"username,omitempty"`
+	Password      string        `json:"password,omitempty" yaml:"password,omitempty"`
+	To            string        `json:"to,omitempty" yaml:"to,omitempty"`
+	Operator      OperatorType  `json:"operator,omitempty" yaml:"operator,omitempty"`
+	LocalHostPath LocalHostPath `json:"localHostPath,omitempty" yaml:"localHostPath,omitempty"`
 }
 
 type ImageBuilderStatus struct {
-	State  string `json:"state,omitempty"`
-	Reason string `json:"reason,omitempty"`
-	Node   string `json:"node,omitempty"`
+	State  string `json:"state,omitempty" yaml:"state,omitempty"`
+	Reason string `json:"reason,omitempty" yaml:"reason,omitempty"`
+	Node   string `json:"node,omitempty" yaml:"node,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // +kubebuilder:printcolumn:name="PodName",type=string,JSONPath=`.spec.podName`
 // +kubebuilder:printcolumn:name="PodNamespace",type=string,JSONPath=`.spec.namespace`
@@ -66,4 +77,15 @@ type ImageBuilderList struct {
 
 func init() {
 	SchemeBuilder.Register(&ImageBuilder{}, &ImageBuilderList{})
+}
+
+func (l LocalHostPath) DefaultContainerPath() string {
+	return "/output"
+}
+
+func (l LocalHostPath) DefaultNodePath() string {
+	if l != "" {
+		return string(l)
+	}
+	return "/tmp/imagebuilder"
 }

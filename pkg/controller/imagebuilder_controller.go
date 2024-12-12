@@ -45,7 +45,6 @@ type ImageBuilderReconciler struct {
 
 func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	builder := &imagebuilderv1.ImageBuilder{}
-	r.ManagerPod.Namespace = "aicp-build"
 	err := r.Client.Get(ctx, req.NamespacedName, builder)
 	if err != nil {
 		if client.IgnoreNotFound(err) == nil {
@@ -111,8 +110,9 @@ func (r *ImageBuilderReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		Namespace:     builder.Namespace,
 		Name:          builder.Name,
 		JobNamespace:  r.ManagerPod.Namespace,
-		ImageRegistry: "dockerhub.aicp.local/aicp-common/jw008/imagebuilder:v1.2.9",
+		ImageRegistry: r.ManagerPod.Spec.Containers[0].Image,
 		NodeName:      builder.Status.Node,
+		ImageHostPath: builder.Spec.LocalHostPath,
 	}
 
 	for _, i := range pod.Status.ContainerStatuses {

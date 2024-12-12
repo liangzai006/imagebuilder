@@ -1,6 +1,7 @@
 package core
 
 import (
+	v12 "imagebuilder/api/v1"
 	v1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -14,6 +15,7 @@ type JobOptions struct {
 	ImageRegistry string
 	ContainerId   string
 	NodeName      string
+	ImageHostPath v12.LocalHostPath
 }
 
 func JobTemplate(o JobOptions) *v1.Job {
@@ -45,6 +47,9 @@ func JobTemplate(o JobOptions) *v1.Job {
 						}, {
 							Name:      "containerd-socket",
 							MountPath: "/run/containerd/containerd.sock",
+						}, {
+							Name:      "image-save-path",
+							MountPath: o.ImageHostPath.DefaultContainerPath(),
 						},
 						},
 						Resources: corev1.ResourceRequirements{
@@ -55,17 +60,26 @@ func JobTemplate(o JobOptions) *v1.Job {
 						},
 					},
 					},
-					Volumes: []corev1.Volume{{
-						Name: "docker-socket",
-						VolumeSource: corev1.VolumeSource{
-							HostPath: &corev1.HostPathVolumeSource{Path: "/var/run/docker.sock"},
+					Volumes: []corev1.Volume{
+						{
+							Name: "docker-socket",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{Path: "/var/run/docker.sock"},
+							},
 						},
-					}, {
-						Name: "containerd-socket",
-						VolumeSource: corev1.VolumeSource{
-							HostPath: &corev1.HostPathVolumeSource{Path: "/run/containerd/containerd.sock"},
+						{
+							Name: "containerd-socket",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{Path: "/run/containerd/containerd.sock"},
+							},
 						},
-					}},
+						{
+							Name: "image-save-path",
+							VolumeSource: corev1.VolumeSource{
+								HostPath: &corev1.HostPathVolumeSource{Path: o.ImageHostPath.DefaultNodePath()},
+							},
+						},
+					},
 					NodeName: o.NodeName,
 					Tolerations: []corev1.Toleration{{
 						Operator: corev1.TolerationOpExists,

@@ -5,4 +5,5 @@ import "context"
 type ImageBuilderAction interface {
 	Commit(ctx context.Context, commitId, to string) error
 	Push(ctx context.Context, ref, user, pwd string) error
+	Save(ctx context.Context, imageName, outputPath string) error
 }

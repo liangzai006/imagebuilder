@@ -93,6 +93,10 @@ func (r *Containerd) Push(ctx context.Context, rawRef, Username, Password string
 	return nil
 }
 
+func (r *Containerd) Save(ctx context.Context, imageName, outputPath string) error {
+	return nil
+}
+
 func NewHostOptions(Username, Password string) (*dockerconfig.HostOptions, error) {
 	var ho dockerconfig.HostOptions
 	if Username != "" {

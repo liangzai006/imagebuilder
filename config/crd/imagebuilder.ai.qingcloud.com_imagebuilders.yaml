@@ -12,9 +12,6 @@ spec:
     listKind: ImageBuilderList
     plural: imagebuilders
     singular: imagebuilder
-    shortNames:
-      - ib
-      - imgb
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
@@ -61,7 +58,11 @@ spec:
             properties:
               containerName:
                 type: string
+              localHostPath:
+                type: string
               namespace:
+                type: string
+              operator:
                 type: string
               password:
                 type: string
